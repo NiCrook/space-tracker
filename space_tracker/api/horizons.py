@@ -1,7 +1,8 @@
 from datetime import datetime
+from dataclasses import dataclass
+from time import monotonic
 
 import httpx
-from dataclasses import dataclass
 
 from space_tracker.config import Location
 
@@ -139,13 +140,17 @@ def _parse_observer_row(line: str) -> EphemerisRow:
     # Date is first 18 chars: " 2026-Mar-07 00:00"
     datetime_str = line[:18].strip()
 
-    # RA is next 11 chars, Dec is next 12 chars (after date + whitespace)
     rest = line[18:].split()
 
+    # Skip leading solar-presence marker (* or similar non-numeric tokens)
+    offset = 0
+    while offset < len(rest) and not rest[offset][0].isdigit() and rest[offset][0] not in "-+":
+        offset += 1
+
     # RA: HH MM SS.ff (3 tokens)
-    ra = f"{rest[0]} {rest[1]} {rest[2]}"
+    ra = f"{rest[offset]} {rest[offset+1]} {rest[offset+2]}"
     # Dec: sDD MM SS.f (3 tokens)
-    dec = f"{rest[3]} {rest[4]} {rest[5]}"
+    dec = f"{rest[offset+3]} {rest[offset+4]} {rest[offset+5]}"
 
     def to_float(val: str) -> float | None:
         if val == "n.a.":
@@ -155,14 +160,14 @@ def _parse_observer_row(line: str) -> EphemerisRow:
         except ValueError:
             return None
 
-    azimuth = to_float(rest[6])
-    elevation = to_float(rest[7])
-    magnitude = to_float(rest[8])
-    surface_brightness = to_float(rest[9])
-    delta_au = to_float(rest[10])
-    delta_dot = to_float(rest[11])
+    azimuth = to_float(rest[offset+6])
+    elevation = to_float(rest[offset+7])
+    magnitude = to_float(rest[offset+8])
+    surface_brightness = to_float(rest[offset+9])
+    delta_au = to_float(rest[offset+10])
+    delta_dot = to_float(rest[offset+11])
     # Solar elongation is second to last, last token is /L or /T
-    solar_elongation = to_float(rest[12])
+    solar_elongation = to_float(rest[offset+12])
 
     return EphemerisRow(
         datetime=datetime_str,
@@ -205,3 +210,109 @@ async def fetch_ephemeris(
 
     data = response.json()
     return parse_ephemeris(data["result"])
+
+
+@dataclass
+class _CacheEntry:
+    rows: list[EphemerisRow]
+    timestamp: float
+
+
+class EphemerisCache:
+    """TTL cache for Horizons API responses, keyed by request parameters."""
+
+    def __init__(self, default_ttl: float = 120.0) -> None:
+        self._cache: dict[str, _CacheEntry] = {}
+        self._default_ttl = default_ttl
+
+    @staticmethod
+    def _make_key(
+        command: str,
+        coord: str,
+        start_time: str,
+        stop_time: str,
+        step_size: str,
+        quantities: str,
+    ) -> str:
+        return f"{command}|{coord}|{start_time}|{stop_time}|{step_size}|{quantities}"
+
+    def get(
+        self,
+        command: str,
+        location: Location,
+        start_time: str,
+        stop_time: str,
+        step_size: str = "60 min",
+        quantities: str = "1,4,9,20,23",
+        ttl: float | None = None,
+    ) -> list[EphemerisRow] | None:
+        key = self._make_key(
+            command, location.horizons_coord, start_time, stop_time, step_size, quantities
+        )
+        entry = self._cache.get(key)
+        if entry is None:
+            return None
+        age = monotonic() - entry.timestamp
+        if age > (ttl if ttl is not None else self._default_ttl):
+            del self._cache[key]
+            return None
+        return entry.rows
+
+    def put(
+        self,
+        rows: list[EphemerisRow],
+        command: str,
+        location: Location,
+        start_time: str,
+        stop_time: str,
+        step_size: str = "60 min",
+        quantities: str = "1,4,9,20,23",
+    ) -> None:
+        key = self._make_key(
+            command, location.horizons_coord, start_time, stop_time, step_size, quantities
+        )
+        self._cache[key] = _CacheEntry(rows=rows, timestamp=monotonic())
+
+    async def fetch(
+        self,
+        client: httpx.AsyncClient,
+        command: str,
+        location: Location,
+        start_time: str,
+        stop_time: str,
+        step_size: str = "60 min",
+        quantities: str = "1,4,9,20,23",
+        ttl: float | None = None,
+    ) -> list[EphemerisRow]:
+        """Fetch with cache — returns cached result if fresh, otherwise fetches and caches."""
+        cached = self.get(
+            command, location, start_time, stop_time, step_size, quantities, ttl=ttl
+        )
+        if cached is not None:
+            return cached
+        rows = await fetch_ephemeris(
+            client, command, location, start_time, stop_time, step_size, quantities
+        )
+        self.put(rows, command, location, start_time, stop_time, step_size, quantities)
+        return rows
+
+    async def fetch_batch(
+        self,
+        client: httpx.AsyncClient,
+        commands: dict[str, str],
+        location: Location,
+        start_time: str,
+        stop_time: str,
+        step_size: str = "60 min",
+        quantities: str = "1,4,9,20,23",
+        ttl: float | None = None,
+    ) -> dict[str, list[EphemerisRow]]:
+        """Fetch multiple objects serially, using cache for each."""
+        results: dict[str, list[EphemerisRow]] = {}
+        for name, command in commands.items():
+            rows = await self.fetch(
+                client, command, location, start_time, stop_time,
+                step_size, quantities, ttl=ttl,
+            )
+            results[name] = rows
+        return results

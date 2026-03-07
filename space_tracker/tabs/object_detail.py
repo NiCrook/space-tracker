@@ -11,7 +11,6 @@ from space_tracker.api.horizons import (
     EphemerisRow,
     RiseTransitSet,
     compute_rise_transit_set,
-    fetch_ephemeris,
 )
 
 
@@ -89,19 +88,22 @@ class ObjectDetailTab(Container):
             return
 
         now = datetime.now(timezone.utc)
+        cache = self.app.cache
+
         async with httpx.AsyncClient(timeout=30.0) as client:
-            # Current snapshot
+            # Current snapshot (cache for 2 min)
             start = now.strftime("%Y-%b-%d %H:%M")
             stop = (now + timedelta(minutes=1)).strftime("%Y-%b-%d %H:%M")
-            snapshot_rows = await fetch_ephemeris(
+            snapshot_rows = await cache.fetch(
                 client, command, location, start, stop, step_size="1 min"
             )
 
-            # 24-hour ephemeris for rise/set
+            # 24-hour ephemeris for rise/set (cache for 10 min)
             rts_start = (now - timedelta(hours=2)).strftime("%Y-%b-%d %H:%M")
             rts_stop = (now + timedelta(hours=22)).strftime("%Y-%b-%d %H:%M")
-            rts_rows = await fetch_ephemeris(
-                client, command, location, rts_start, rts_stop, step_size="10 min"
+            rts_rows = await cache.fetch(
+                client, command, location, rts_start, rts_stop,
+                step_size="10 min", ttl=600.0,
             )
 
         if not snapshot_rows:

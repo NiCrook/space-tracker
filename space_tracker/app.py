@@ -1,6 +1,7 @@
 from textual.app import App, ComposeResult
 from textual.widgets import Header, Footer, TabbedContent, TabPane
 
+from space_tracker.api.horizons import EphemerisCache
 from space_tracker.config import Config
 from space_tracker.screens.location_setup import LocationSetupScreen
 from space_tracker.tabs.sky_now import SkyNowTab
@@ -28,6 +29,7 @@ class SpaceTrackerApp(App):
     def __init__(self) -> None:
         super().__init__()
         self.config = Config.load()
+        self.cache = EphemerisCache()
 
     def compose(self) -> ComposeResult:
         yield Header()

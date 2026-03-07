@@ -8,7 +8,7 @@ from textual.widgets import DataTable, Static
 from textual.containers import Container
 from textual.worker import Worker, WorkerState
 
-from space_tracker.api.horizons import PLANET_COMMANDS, EphemerisRow, fetch_ephemeris
+from space_tracker.api.horizons import PLANET_COMMANDS, EphemerisRow
 
 
 def format_row(name: str, row: EphemerisRow) -> tuple[str, ...]:
@@ -91,17 +91,15 @@ class SkyNowTab(Container):
         stop = (now + timedelta(minutes=1)).strftime("%Y-%b-%d %H:%M")
 
         results: list[tuple[str, EphemerisRow]] = []
+        cache = self.app.cache
 
         async with httpx.AsyncClient(timeout=30.0) as client:
-            for name, command in PLANET_COMMANDS.items():
-                try:
-                    rows = await fetch_ephemeris(
-                        client, command, location, start, stop, step_size="1 min"
-                    )
-                    if rows:
-                        results.append((name, rows[0]))
-                except Exception as e:
-                    self.log.error(f"Failed to fetch {name}: {e}")
+            batch = await cache.fetch_batch(
+                client, PLANET_COMMANDS, location, start, stop, step_size="1 min"
+            )
+            for name, rows in batch.items():
+                if rows:
+                    results.append((name, rows[0]))
 
         sorted_results = sort_rows(results)
         self._results = sorted_results
