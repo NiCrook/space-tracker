@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import httpx
 from dataclasses import dataclass
 
@@ -31,6 +33,80 @@ class EphemerisRow:
     delta_au: float | None
     delta_dot: float | None
     solar_elongation: float | None
+
+
+@dataclass
+class RiseTransitSet:
+    rise: str | None
+    transit: str | None
+    transit_elevation: float | None
+    set_time: str | None
+
+
+def _parse_datetime(dt_str: str) -> datetime:
+    """Parse Horizons datetime string like '2026-Mar-07 00:00'."""
+    return datetime.strptime(dt_str, "%Y-%b-%d %H:%M")
+
+
+def _format_time(dt: datetime) -> str:
+    """Format datetime as HH:MM UTC."""
+    return dt.strftime("%H:%M UTC")
+
+
+def compute_rise_transit_set(rows: list[EphemerisRow]) -> RiseTransitSet:
+    """Compute rise/transit/set from a series of ephemeris rows."""
+    if not rows:
+        return RiseTransitSet(None, None, None, None)
+
+    rise: str | None = None
+    set_time: str | None = None
+    transit: str | None = None
+    transit_elevation: float | None = None
+    max_elev = -999.0
+
+    for i, row in enumerate(rows):
+        elev = row.elevation
+        if elev is None:
+            continue
+
+        # Track max elevation for transit
+        if elev > 0 and elev > max_elev:
+            max_elev = elev
+            transit_elevation = elev
+            transit = row.datetime
+
+        # Check for sign changes with previous row
+        if i > 0:
+            prev_elev = rows[i - 1].elevation
+            if prev_elev is None:
+                continue
+
+            if prev_elev <= 0 < elev and rise is None:
+                # Negative→positive = rise, interpolate
+                t1 = _parse_datetime(rows[i - 1].datetime)
+                t2 = _parse_datetime(row.datetime)
+                frac = abs(prev_elev) / (abs(prev_elev) + abs(elev))
+                crossing = t1 + (t2 - t1) * frac
+                rise = _format_time(crossing)
+
+            if prev_elev >= 0 > elev and set_time is None:
+                # Positive→negative = set, interpolate
+                t1 = _parse_datetime(rows[i - 1].datetime)
+                t2 = _parse_datetime(row.datetime)
+                frac = abs(prev_elev) / (abs(prev_elev) + abs(elev))
+                crossing = t1 + (t2 - t1) * frac
+                set_time = _format_time(crossing)
+
+    # Format transit time
+    if transit is not None:
+        transit = _format_time(_parse_datetime(transit))
+
+    return RiseTransitSet(
+        rise=rise,
+        transit=transit,
+        transit_elevation=transit_elevation,
+        set_time=set_time,
+    )
 
 
 def parse_ephemeris(result_text: str) -> list[EphemerisRow]:

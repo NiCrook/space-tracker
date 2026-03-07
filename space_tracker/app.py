@@ -42,6 +42,14 @@ class SpaceTrackerApp(App):
                 yield SearchTab()
         yield Footer()
 
+    def on_sky_now_tab_object_selected(
+        self, event: SkyNowTab.ObjectSelected
+    ) -> None:
+        tabbed = self.query_one(TabbedContent)
+        tabbed.active = "tab-object-detail"
+        detail = self.query_one(ObjectDetailTab)
+        detail.load_object(event.name, event.command)
+
     def on_mount(self) -> None:
         if self.config.location is None:
             self.push_screen(LocationSetupScreen(self.config))

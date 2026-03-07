@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 import httpx
 from textual.app import ComposeResult
 from textual.binding import Binding
+from textual.message import Message
 from textual.widgets import DataTable, Static
 from textual.containers import Container
 from textual.worker import Worker, WorkerState
@@ -45,6 +46,14 @@ def sort_rows(rows: list[tuple[str, EphemerisRow]]) -> list[tuple[str, Ephemeris
 
 class SkyNowTab(Container):
     """Objects currently visible from the user's location."""
+
+    class ObjectSelected(Message):
+        """Posted when a user selects a row in the sky table."""
+
+        def __init__(self, name: str, command: str) -> None:
+            super().__init__()
+            self.name = name
+            self.command = command
 
     BINDINGS = [
         Binding("r", "refresh", "Refresh"),
@@ -95,14 +104,26 @@ class SkyNowTab(Container):
                     self.log.error(f"Failed to fetch {name}: {e}")
 
         sorted_results = sort_rows(results)
+        self._results = sorted_results
 
         table = self.query_one("#sky-table", DataTable)
         table.clear()
+        table.cursor_type = "row"
         for name, row in sorted_results:
             table.add_row(*format_row(name, row))
 
         updated = datetime.now().strftime("%H:%M:%S")
         self._set_status(f"Last updated: {updated} ({len(results)} objects)")
+
+    def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+        if not hasattr(self, "_results") or not self._results:
+            return
+        row_index = event.cursor_row
+        if 0 <= row_index < len(self._results):
+            name = self._results[row_index][0]
+            command = PLANET_COMMANDS.get(name, "")
+            if command:
+                self.post_message(self.ObjectSelected(name, command))
 
     def action_refresh(self) -> None:
         self._load_data()
