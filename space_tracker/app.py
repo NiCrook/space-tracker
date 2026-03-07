@@ -2,6 +2,7 @@ from textual.app import App, ComposeResult
 from textual.widgets import Header, Footer, TabbedContent, TabPane
 
 from space_tracker.config import Config
+from space_tracker.screens.location_setup import LocationSetupScreen
 from space_tracker.tabs.sky_now import SkyNowTab
 from space_tracker.tabs.object_detail import ObjectDetailTab
 from space_tracker.tabs.close_approaches import CloseApproachesTab
@@ -40,6 +41,10 @@ class SpaceTrackerApp(App):
             with TabPane("Search", id="tab-search"):
                 yield SearchTab()
         yield Footer()
+
+    def on_mount(self) -> None:
+        if self.config.location is None:
+            self.push_screen(LocationSetupScreen(self.config))
 
 
 def main() -> None:
