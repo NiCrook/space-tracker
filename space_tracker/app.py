@@ -8,6 +8,7 @@ from space_tracker.tabs.sky_now import SkyNowTab
 from space_tracker.tabs.object_detail import ObjectDetailTab
 from space_tracker.tabs.close_approaches import CloseApproachesTab
 from space_tracker.tabs.search import SearchTab
+from space_tracker.tabs.solar_activity import SolarActivityTab
 
 
 class SpaceTrackerApp(App):
@@ -42,6 +43,8 @@ class SpaceTrackerApp(App):
                 yield CloseApproachesTab()
             with TabPane("Search", id="tab-search"):
                 yield SearchTab()
+            with TabPane("Solar Activity", id="tab-solar-activity"):
+                yield SolarActivityTab()
         yield Footer()
 
     def on_sky_now_tab_object_selected(
