@@ -16,7 +16,7 @@
 ## Phase 3: Solar & Events
 
 - ~~**Solar Activity tab** — solar flares, CMEs, geomagnetic storms from NASA DONKI API~~ **Done**
-- **Events Calendar tab** — conjunctions, oppositions, meteor showers, eclipses
+- ~~**Events Calendar tab** — conjunctions, oppositions, meteor showers, eclipses~~ **Done**
 
 ## Phase 4: Extended Objects
 
