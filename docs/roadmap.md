@@ -2,16 +2,16 @@
 
 ## Phase 1: Foundation
 
-- Project scaffolding (Textual app, project structure, dependencies)
-- Location configuration (lat/lon/elevation via config file or first-run prompt)
-- JPL Horizons API client (async, with caching and request batching)
-- **Sky Now tab** — objects currently visible from the user's location (planets, Sun, Moon) with altitude/azimuth, magnitude
-- **Object Detail tab** — drill into a selected object for rise/set times, distance, RA/Dec, elongation
+- ~~Project scaffolding (Textual app, project structure, dependencies)~~ **Done**
+- ~~Location configuration (lat/lon/elevation via config file or first-run prompt)~~ **Done**
+- ~~JPL Horizons API client (async, with caching and request batching)~~ **Done**
+- ~~**Sky Now tab** — objects currently visible from the user's location (planets, Sun, Moon) with altitude/azimuth, magnitude~~ **Done**
+- ~~**Object Detail tab** — drill into a selected object for rise/set times, distance, RA/Dec, elongation~~ **Done**
 
 ## Phase 2: Asteroids & Search
 
-- **Close Approaches tab** — upcoming asteroid flybys from JPL Close Approach API (size, distance, velocity, date)
-- **Search tab** — look up any object by name/designation via Horizons, display position and details
+- ~~**Close Approaches tab** — upcoming asteroid flybys from JPL Close Approach API (size, distance, velocity, date)~~ **Done**
+- ~~**Search tab** — look up any object by name/designation via Horizons, display position and details~~ **Done**
 
 ## Phase 3: Solar & Events
 
