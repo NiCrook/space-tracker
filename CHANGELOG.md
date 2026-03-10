@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.1.0] - 2026-03-10
+
+### Features
+
+- (sky-now) expand tracked objects with progressive loading and dim below-horizon styling
+
+### Refactoring
+
+- (sky-now) remove automatic 5-minute refresh interval
+
+### Other
+
+- add CODEOWNERS for required code owner reviews
+
 ## [1.0.0] - 2026-03-09
 
 ### Features

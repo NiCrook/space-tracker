@@ -58,19 +58,31 @@ Full list: https://ssd-api.jpl.nasa.gov/doc/horizons.html
 
 ### Common COMMAND values
 
-| Body    | COMMAND |
-| ------- | ------- |
-| Sun     | `'10'`  |
-| Moon    | `'301'` |
-| Mercury | `'199'` |
-| Venus   | `'299'` |
-| Mars    | `'499'` |
-| Jupiter | `'599'` |
-| Saturn  | `'699'` |
-| Uranus  | `'799'` |
-| Neptune | `'899'` |
+| Body     | COMMAND     |
+| -------- | ----------- |
+| Sun      | `'10'`      |
+| Moon     | `'301'`     |
+| Mercury  | `'199'`     |
+| Venus    | `'299'`     |
+| Mars     | `'499'`     |
+| Jupiter  | `'599'`     |
+| Saturn   | `'699'`     |
+| Uranus   | `'799'`     |
+| Neptune  | `'899'`     |
+| Pluto    | `'999'`     |
+| Io       | `'501'`     |
+| Europa   | `'502'`     |
+| Ganymede | `'503'`     |
+| Callisto | `'504'`     |
+| Ceres    | `'1;'`      |
+| Vesta    | `'4;'`      |
+| Pallas   | `'2;'`      |
+| Juno     | `'3;'`      |
+| Eris     | `'136199;'` |
+| Makemake | `'136472;'` |
+| Haumea   | `'136108;'` |
 
-Asteroids and comets can be queried by name or designation (e.g., `'Ceres'`, `'433'` for Eros).
+Asteroids and comets can be queried by name or designation (e.g., `'Ceres'`, `'433'` for Eros). Append `;` to force minor-body lookup (e.g., `'1;'` for Ceres instead of Mercury barycenter).
 
 ## Sample Request
 

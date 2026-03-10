@@ -1,5 +1,7 @@
+from rich.text import Text
+
 from space_tracker.api.horizons import EphemerisRow
-from space_tracker.tabs.sky_now import format_row, sort_rows
+from space_tracker.tabs.sky_now import format_row, format_row_styled, sort_rows
 
 
 def _make_row(
@@ -71,3 +73,22 @@ def test_sort_rows_none_elevation_last():
     sorted_result = sort_rows(rows)
     names = [name for name, _ in sorted_result]
     assert names == ["Jupiter", "Mars", "Moon"]
+
+
+def test_format_row_styled_above_horizon():
+    row = _make_row(elevation=45.0)
+    result = format_row_styled("Jupiter", row)
+    assert all(isinstance(cell, str) for cell in result)
+
+
+def test_format_row_styled_below_horizon():
+    row = _make_row(elevation=-10.0)
+    result = format_row_styled("Saturn", row)
+    assert all(isinstance(cell, Text) for cell in result)
+    assert all(cell.style == "dim" for cell in result)
+
+
+def test_format_row_styled_none_elevation():
+    row = _make_row(elevation=None)
+    result = format_row_styled("Moon", row)
+    assert all(isinstance(cell, Text) for cell in result)
