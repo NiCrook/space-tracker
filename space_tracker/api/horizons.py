@@ -21,6 +21,34 @@ PLANET_COMMANDS = {
     "Neptune": "899",
 }
 
+DWARF_PLANET_COMMANDS = {
+    "Pluto": "999",
+    "Ceres": "1;",
+    "Eris": "136199;",
+    "Makemake": "136472;",
+    "Haumea": "136108;",
+}
+
+ASTEROID_COMMANDS = {
+    "Vesta": "4;",
+    "Pallas": "2;",
+    "Juno": "3;",
+}
+
+GALILEAN_MOON_COMMANDS = {
+    "Io": "501",
+    "Europa": "502",
+    "Ganymede": "503",
+    "Callisto": "504",
+}
+
+ALL_SKY_OBJECTS = {
+    **PLANET_COMMANDS,
+    **DWARF_PLANET_COMMANDS,
+    **ASTEROID_COMMANDS,
+    **GALILEAN_MOON_COMMANDS,
+}
+
 
 @dataclass
 class EphemerisRow:
