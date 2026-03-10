@@ -80,7 +80,6 @@ class SkyNowTab(Container):
             "Name", "Alt", "Az", "Mag", "RA", "Dec", "Distance (AU)", "Elongation"
         )
         self._load_data()
-        self.set_interval(300, self._load_data)
 
     def _load_data(self) -> None:
         self._set_status("Loading...")
