@@ -20,6 +20,6 @@
 
 ## Phase 4: Extended Objects
 
-- **Satellites tab** — ISS, Hubble, etc. via CelesTrak TLE data
+- ~~**Satellites tab** — ISS, Hubble, etc. via CelesTrak TLE data~~ **Done**
 - **Stars/Deep-Sky tab** — star and deep-sky object lookup via SIMBAD or Gaia
 - Constellation column in Sky Now (derive from RA/Dec using IAU boundary data)
